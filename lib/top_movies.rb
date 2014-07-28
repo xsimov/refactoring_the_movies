@@ -16,7 +16,7 @@ class MovieCollection
   end
 
   def apply_order order
-    ordered = @whole_collection.sort { |first, second| order.call(first, second) }
+    @whole_collection.sort { |f, s| order.call(f, s) }
   end
 
   def apply_filter
@@ -62,19 +62,21 @@ class Movie
 end
 
 class Order
-  def self.by(param, descendant = false)
-    return lambda { |first, second| first[param] <=> second[param] } unless descendant
-    lambda { |first,second| second[param] <=> first[param] }
+  def self.by(param, descendant = true)
+    unless descendant
+      return lambda { |f,s| f.instance_variable_get("@#{param}".to_sym) <=> s.instance_variable_get("@#{param}".to_sym) }
+    end
+    lambda { |f,s| s.instance_variable_get("@#{param}".to_sym) <=> f.instance_variable_get("@#{param}".to_sym) }
   end
 end
 
 class Filter
   def by_duration cut_duration, delta = 12
-    lambda {}
+    {}
   end
 
   def only_fulfilled
-    lambda {}
+    {}
   end
 end
 

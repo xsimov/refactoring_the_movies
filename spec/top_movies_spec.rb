@@ -11,7 +11,6 @@ describe "A movie" do
 end
 
 describe "The MovieCollection" do
-
   before(:each) do
     @a_new_hope = Movie.new "Star Wars: A New Hope", 1977
     @a_new_hope.set_duration_to 121
@@ -34,7 +33,7 @@ describe "The order" do
     @a_new_hope.set_duration_to 121
     @a_new_hope.set_popularity_to 100
     @return_of_jedi = Movie.new "Star Wars: The Return of the Jedi", 1983
-    @return_of_jedi.set_duration_to 121
+    @return_of_jedi.set_duration_to 118
     @return_of_jedi.set_popularity_to 100
     @home = MovieCollection.new
     @home.add_the_movie @a_new_hope
@@ -45,7 +44,7 @@ describe "The order" do
     expect(Order.by("duration").class).to eq(Proc)
   end
 
-  it "sorts by parameter in ascendant by default" do
+  it "sorts by parameter in descendant by default" do
     ordered_movies = @home.apply_order(Order.by("duration"))
     first_movie = ordered_movies.first
     last_movie = ordered_movies.last
@@ -62,8 +61,12 @@ describe "The Filter" do
       @home = MovieCollection.new
   end
 
-  it "returns a rule" do
-    expect(Filter.new.only_fulfilled.class).to eq(Proc)
+  it "returns a hash with the parameter as key and the -> as value" do
+    expect(Filter.new.only_fulfilled.class).to eq(Hash)
+  end
+  
+  it "must filter movies if they don't have all values filled" do
+    expect(@home.apply_filter(Filter.only_fulfilled).to eq([@gigi]))
   end
 
 end
@@ -82,9 +85,6 @@ describe TopMovies do
       @home.add_the_movie @untitled
     end
 
-    it "must filter movies if they don't have all values filled" do
-      expect(@home.apply_filter(Filter.only_fulfilled).to eq([@gigi]))
-    end
 
     it 'should order the movies by time duration' do
       ordered_movies, grouped_movies = TopMovies.generate_top_lists(@home.show_all_movies, true, 120, 12)
