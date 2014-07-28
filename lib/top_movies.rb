@@ -1,13 +1,82 @@
 require 'rubygems'
 require 'json'
 
+class MovieCollection
+	def initialize
+		@whole_collection = []
+	end
+	
+	def add_the_movie movie
+		@whole_collection.push(movie)
+	end
+
+	def show_all_movies
+		@whole_collection
+	end
+
+end
+
+class Movie
+	attr_accessor :title, :year, :duration, :popularity
+	def initialize title, year
+		@title = title
+		@year = year
+	end
+
+	def set_popularity_to popularity
+		@popularity = popularity
+	end
+
+	def set_duration_to duration
+		@duration = duration
+	end
+
+	def has_all_attributes?
+		(has_a_title?)&&(has_a_year?)&&(has_a_duration?)&&(has_a_popularity?)
+	end
+
+	private
+
+	def has_a_title?
+		(!@title.empty?)
+	end
+
+	def has_a_year?
+		(!@year.nil?)
+	end
+
+	def has_a_duration?
+		(!@duration.nil?)
+	end
+
+	def has_a_popularity?
+		(!@popularity.nil?)
+	end
+
+end
+
+class Filter
+	def self.by(param)
+		->{}
+	end
+end
+
 class TopMovies
+
+	def self.only_fulfilled_from collection
+		output = []
+		collection.each do |movie|
+			output.push(movie) if movie.has_all_attributes?
+		end
+		output
+	end
+
   def self.generate_top_lists(movies, filter_by_time = false, film_time = 120, delta = 12, group_by_year = false)
     grouped_movies = {}
     filtered_movies = []
 
     # filter the movies that does not meet the passed requirements
-    movies.each { |movie| if ((movie['length'] - film_time).abs < delta) then filtered_movies << movie end }
+    movies.each { |movie| if ((movie.duration - film_time).abs < delta) then filtered_movies << movie end }
     
     # order the movies by popularity
     filtered_movies.each_index do |i|
