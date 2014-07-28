@@ -1,3 +1,4 @@
+require 'pry'
 require 'top_movies'
 
 describe "A movie" do
@@ -27,16 +28,48 @@ describe "The MovieCollection" do
   end
 end
 
-describe "The Filter" do
-  it "creates a rule" do
-    expect(Filter.by("length").class).to eq(Proc)
+describe "The order" do
+  before(:each) do
+    @a_new_hope = Movie.new "Star Wars: A new hope", 1977
+    @a_new_hope.set_duration_to 121
+    @a_new_hope.set_popularity_to 100
+    @return_of_jedi = Movie.new "Star Wars: The Return of the Jedi", 1983
+    @return_of_jedi.set_duration_to 121
+    @return_of_jedi.set_popularity_to 100
+    @home = MovieCollection.new
+    @home.add_the_movie @a_new_hope
+    @home.add_the_movie @return_of_jedi
   end
+
+  it "returns a rule" do
+    expect(Order.by("duration").class).to eq(Proc)
+  end
+
+  it "sorts by parameter in ascendant by default" do
+    ordered_movies = @home.apply_order(Order.by("duration"))
+    first_movie = ordered_movies.first
+    last_movie = ordered_movies.last
+    expect(first_movie.duration).to be > last_movie.duration
+  end
+end
+
+describe "The Filter" do
+
+  before(:each) do
+      @a_new_hope = Movie.new "Star Wars: A new hope", 1977
+      @a_new_hope.set_duration_to 121
+      @a_new_hope.set_popularity_to 100
+      @home = MovieCollection.new
+  end
+
+  it "returns a rule" do
+    expect(Filter.new.only_fulfilled.class).to eq(Proc)
+  end
+
 end
 
 describe TopMovies do
 
-  context "helper methods" do
-
     before(:each) do
       @gigi = Movie.new "Gigi", 1958
       @gigi.set_duration_to 124
@@ -49,38 +82,14 @@ describe TopMovies do
       @home.add_the_movie @untitled
     end
 
-    it "must filter movies if they don't fit the requirements" do
-      expect(TopMovies.only_fulfilled_from(@home.show_all_movies)).to eq([@gigi])
-    end
-
-  end
-
-  context 'functionality' do
-
-    before(:each) do
-      @gigi = Movie.new "Gigi", 1958
-      @gigi.set_duration_to 124
-      @gigi.set_popularity_to 2
-      @untitled = Movie.new "", 1983
-      @untitled.set_duration_to 125
-      @untitled.set_popularity_to 4
-      @home = MovieCollection.new
-      @home.add_the_movie @gigi
-      @home.add_the_movie @untitled
+    it "must filter movies if they don't have all values filled" do
+      expect(@home.apply_filter(Filter.only_fulfilled).to eq([@gigi]))
     end
 
     it 'should order the movies by time duration' do
-      ordered_movies, grouped_movies = TopMovies.generate_top_lists(home.show_all_movies, true, 120, 12)
+      ordered_movies, grouped_movies = TopMovies.generate_top_lists(@home.show_all_movies, true, 120, 12)
       expect(ordered_movies.first['popularity']).to be < ordered_movies.last['popularity']
     end
-
-    it 'should filter the movies' do
-      movies = [{"id"=>54, "duration"=>124, "title"=>"Gigi", "year"=>"1958", "popularity"=>50}, {"id"=>29, "duration"=>290, "year"=>"1983", "popularity"=>1}]
-      ordered_movies, grouped_movies = TopMovies.generate_top_lists(@home.show_all_movies, true, 120, 12)
-      expect(ordered_movies.length).to be 1
-      expect(ordered_movies.first["id"]).to be 54
-    end
-
 
     it 'should group the movies' do
       movies = [{"id"=>54, "length"=>124, "title"=>"Gigi", "year"=>"1958", "popularity"=>50}, {"id"=>29, "length"=>125, "year"=>"1983", "popularity"=>1}]
@@ -88,8 +97,6 @@ describe TopMovies do
       ordered_movies, grouped_movies = TopMovies.generate_top_lists(movies, true, 120, 12, true)
       expect(grouped_movies.keys).to match_array(["1958", "1983"])
     end
-
-  end
 
 end
 

@@ -13,17 +13,18 @@ task :generate_top_lists do
   film_time = 120
   delta = 12
 
-  # read the movies file and parse the JSON
   source_file = File.open(source_path)
   movies      = JSON.load(source_file)
+  unless movies.nil?
+    
+    ordered_movies, grouped_movies = TopMovies.generate_top_lists(movies, true, film_time, delta, true)
 
-  ordered_movies, grouped_movies = TopMovies.generate_top_lists(movies, true, film_time, delta, true)
+    File.open(grouped_films_path, 'w+') { |f| f.write(JSON.pretty_generate(grouped_movies)) }
+    File.open(ordered_films_path, 'w+') { |f| f.write(JSON.pretty_generate(ordered_movies)) }
 
-  # saving the files
-  File.open(grouped_films_path, 'w+') { |f| f.write(JSON.pretty_generate(grouped_movies)) }
-  File.open(ordered_films_path, 'w+') { |f| f.write(JSON.pretty_generate(ordered_movies)) }
+    File.truncate(source_path, 0)
+  else
+    source_file.close
+  end
 
-  # we clear the file
-  File.truncate(source_path, 0)
 end
-

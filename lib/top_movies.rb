@@ -1,75 +1,84 @@
+require 'pry'
 require 'rubygems'
 require 'json'
 
 class MovieCollection
-	def initialize
-		@whole_collection = []
-	end
-	
-	def add_the_movie movie
-		@whole_collection.push(movie)
-	end
+  def initialize
+    @whole_collection = []
+  end
+  
+  def add_the_movie movie
+    @whole_collection.push(movie)
+  end
 
-	def show_all_movies
-		@whole_collection
-	end
+  def show_all_movies
+    @whole_collection
+  end
+
+  def apply_order order
+    ordered = @whole_collection.sort { |first, second| order.call(first, second) }
+  end
+
+  def apply_filter
+  end
 
 end
 
 class Movie
-	attr_accessor :title, :year, :duration, :popularity
-	def initialize title, year
-		@title = title
-		@year = year
-	end
+  attr_accessor :title, :year, :duration, :popularity
+  def initialize title, year
+    @title = title
+    @year = year
+  end
 
-	def set_popularity_to popularity
-		@popularity = popularity
-	end
+  def set_popularity_to popularity
+    @popularity = popularity
+  end
 
-	def set_duration_to duration
-		@duration = duration
-	end
+  def set_duration_to duration
+    @duration = duration
+  end
 
-	def has_all_attributes?
-		(has_a_title?)&&(has_a_year?)&&(has_a_duration?)&&(has_a_popularity?)
-	end
+  def has_all_attributes?
+    (has_a_title?) && (has_a_year?) && (has_a_duration?) && (has_a_popularity?)
+  end
 
-	private
+  private
+  def has_a_title?
+    (!@title.empty?)
+  end
 
-	def has_a_title?
-		(!@title.empty?)
-	end
+  def has_a_year?
+    (!@year.nil?)
+  end
 
-	def has_a_year?
-		(!@year.nil?)
-	end
+  def has_a_duration?
+    (!@duration.nil?)
+  end
 
-	def has_a_duration?
-		(!@duration.nil?)
-	end
+  def has_a_popularity?
+    (!@popularity.nil?)
+  end
+end
 
-	def has_a_popularity?
-		(!@popularity.nil?)
-	end
-
+class Order
+  def self.by(param, descendant = false)
+    return lambda { |first, second| first[param] <=> second[param] } unless descendant
+    lambda { |first,second| second[param] <=> first[param] }
+  end
 end
 
 class Filter
-	def self.by(param)
-		->{}
-	end
+  def by_duration cut_duration, delta = 12
+    lambda {}
+  end
+
+  def only_fulfilled
+    lambda {}
+  end
 end
 
 class TopMovies
-
-	def self.only_fulfilled_from collection
-		output = []
-		collection.each do |movie|
-			output.push(movie) if movie.has_all_attributes?
-		end
-		output
-	end
 
   def self.generate_top_lists(movies, filter_by_time = false, film_time = 120, delta = 12, group_by_year = false)
     grouped_movies = {}
@@ -79,19 +88,14 @@ class TopMovies
     movies.each { |movie| if ((movie.duration - film_time).abs < delta) then filtered_movies << movie end }
     
     # order the movies by popularity
-    filtered_movies.each_index do |i|
-      (filtered_movies.length - i - 1).times do |job|
-        if filtered_movies[job]['popularity'] > filtered_movies[job + 1]['popularity']
-          filtered_movies[job], filtered_movies[job + 1] = filtered_movies[job + 1], filtered_movies[job]
-        end
-      end
-    end
+    filtered_movies.sort! { |f, s| f.popularity <=> s.popularity }
 
 
     if group_by_year
+
       # filter the movies that does not meet the passed requirements
       filtered_movies_for_groups = []
-      movies.each { |movie| if ((movie['length'] - film_time).abs < delta) then filtered_movies_for_groups << movie end }
+      movies.each { |movie| if ((movie['duration'] - film_time).abs < delta) then filtered_movies_for_groups << movie end }
 
       # we group the movies by year
       filtered_movies_for_groups.each do |movie|
